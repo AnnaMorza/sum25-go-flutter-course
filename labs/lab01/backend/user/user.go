@@ -2,18 +2,15 @@ package user
 
 import (
 	"errors"
-	"fmt"
+	"regexp"
 	"strings"
-	"unicode"
 )
 
+// Predefined errors
 var (
-	// ErrInvalidEmail is returned when the email format is invalid
+	ErrInvalidName  = errors.New("invalid name: must be between 1 and 30 characters")
+	ErrInvalidAge   = errors.New("invalid age: must be between 0 and 150")
 	ErrInvalidEmail = errors.New("invalid email format")
-	// ErrInvalidAge is returned when the age is invalid
-	ErrInvalidAge = errors.New("invalid age: must be between 0 and 150")
-	// ErrEmptyName is returned when the name is empty
-	ErrEmptyName = errors.New("name cannot be empty")
 )
 
 // User represents a user in the system
@@ -23,28 +20,13 @@ type User struct {
 	Email string
 }
 
-// NewUser creates a new user with validation
-func NewUser(name string, age int, email string) (*User, error) {
-	user := &User{
-		Name:  name,
-		Age:   age,
-		Email: email,
-	}
-
-	if err := user.Validate(); err != nil {
-		return nil, err
-	}
-
-	return user, nil
-}
-
-// Validate checks if the user data is valid
+// Validate checks if the user data is valid, returns an error for each invalid field
 func (u *User) Validate() error {
-	if strings.TrimSpace(u.Name) == "" {
-		return ErrEmptyName
+	if !IsValidName(u.Name) {
+		return ErrInvalidName
 	}
 
-	if u.Age < 0 || u.Age > 150 {
+	if !IsValidAge(u.Age) {
 		return ErrInvalidAge
 	}
 
@@ -55,55 +37,72 @@ func (u *User) Validate() error {
 	return nil
 }
 
-// String returns a string representation of the user
+// String returns a string representation of the user, formatted as "Name: <name>, Age: <age>, Email: <email>"
 func (u *User) String() string {
-	return fmt.Sprintf("User{Name: %s, Age: %d, Email: %s}", u.Name, u.Age, u.Email)
+	return "Name: " + u.Name + ", Age: " + 
+	               itoa(u.Age) + ", Email: " + u.Email
+}
+
+// NewUser creates a new user with validation, returns an error if the user is not valid
+func NewUser(name string, age int, email string) (*User, error) {
+	u := &User{
+		Name:  name,
+		Age:   age,
+		Email: email,
+	}
+
+	if err := u.Validate(); err != nil {
+		return nil, err
+	}
+
+	return u, nil
 }
 
 // IsValidEmail checks if the email format is valid
+// You can use regexp.MustCompile to compile the email regex
 func IsValidEmail(email string) bool {
-	if len(email) < 3 || len(email) > 254 {
+	// Very basic regex for email validation:
+	// must contain exactly one '@', at least one '.' after '@' and no spaces.
+	if strings.Count(email, "@") != 1 {
 		return false
 	}
 
-	at := strings.LastIndex(email, "@")
-	if at <= 0 || at > len(email)-3 {
-		return false
-	}
+	// Use a regex to check basic structure: something@something.something
+	// The domain part must contain at least one dot and some letters after it.
+	emailRegex := regexp.MustCompile(`^[^\s@]+@[^\s@]+\.[^\s@]+$`)
+	return emailRegex.MatchString(email)
+}
 
-	// Check local part (before @)
-	local := email[:at]
-	if len(local) > 64 {
-		return false
-	}
-	for _, r := range local {
-		if !unicode.IsLetter(r) && !unicode.IsDigit(r) && 
-			r != '.' && r != '_' && r != '-' && r != '+' {
-			return false
-		}
-	}
+// IsValidName checks if the name is valid, returns false if the name is empty or longer than 30 characters
+func IsValidName(name string) bool {
+	length := len(name)
+	return length >= 1 && length <= 30
+}
 
-	// Check domain part (after @)
-	domain := email[at+1:]
-	if len(domain) > 253 {
-		return false
-	}
-	if strings.HasPrefix(domain, ".") || strings.HasSuffix(domain, ".") {
-		return false
-	}
-	for _, part := range strings.Split(domain, ".") {
-		if len(part) == 0 || len(part) > 63 {
-			return false
-		}
-		if strings.HasPrefix(part, "-") || strings.HasSuffix(part, "-") {
-			return false
-		}
-		for _, r := range part {
-			if !unicode.IsLetter(r) && !unicode.IsDigit(r) && r != '-' {
-				return false
-			}
-		}
-	}
+// IsValidAge checks if the age is valid, returns false if the age is not between 0 and 150
+func IsValidAge(age int) bool {
+	return age >= 0 && age <= 150
+}
 
-	return true
+// Helper: convert int to string without importing strconv (to keep minimal imports)
+func itoa(i int) string {
+	if i == 0 {
+		return "0"
+	}
+	var b [20]byte
+	pos := len(b)
+	neg := i < 0
+	if neg {
+		i = -i
+	}
+	for i > 0 {
+		pos--
+		b[pos] = byte('0' + i%10)
+		i /= 10
+	}
+	if neg {
+		pos--
+		b[pos] = '-'
+	}
+	return string(b[pos:])
 }

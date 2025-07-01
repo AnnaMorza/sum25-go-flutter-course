@@ -3,28 +3,27 @@ package calculator
 import (
 	"errors"
 	"strconv"
-	"strings"
 )
 
 // ErrDivisionByZero is returned when attempting to divide by zero
 var ErrDivisionByZero = errors.New("division by zero")
 
-// Add returns the sum of two numbers
+// Add adds two float64 numbers
 func Add(a, b float64) float64 {
 	return a + b
 }
 
-// Subtract returns the difference between two numbers
+// Subtract subtracts b from a
 func Subtract(a, b float64) float64 {
 	return a - b
 }
 
-// Multiply returns the product of two numbers
+// Multiply multiplies two float64 numbers
 func Multiply(a, b float64) float64 {
 	return a * b
 }
 
-// Divide returns the quotient of two numbers
+// Divide divides a by b, returns an error if b is zero
 func Divide(a, b float64) (float64, error) {
 	if b == 0 {
 		return 0, ErrDivisionByZero
@@ -34,10 +33,6 @@ func Divide(a, b float64) (float64, error) {
 
 // StringToFloat converts a string to float64
 func StringToFloat(s string) (float64, error) {
-	s = strings.TrimSpace(s)
-	if s == "" {
-		return 0, errors.New("empty string")
-	}
 	return strconv.ParseFloat(s, 64)
 }
 

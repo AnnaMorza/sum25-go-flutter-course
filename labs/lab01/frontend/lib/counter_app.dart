@@ -10,19 +10,19 @@ class CounterApp extends StatefulWidget {
 class _CounterAppState extends State<CounterApp> {
   int _counter = 0;
 
-  void _increment() {
+  void _incrementCounter() {
     setState(() {
       _counter++;
     });
   }
 
-  void _decrement() {
+  void _decrementCounter() {
     setState(() {
-      _counter--; // Убрали проверку на > 0, чтобы разрешить отрицательные значения
+      _counter--;
     });
   }
 
-  void _reset() {
+  void _resetCounter() {
     setState(() {
       _counter = 0;
     });
@@ -32,46 +32,36 @@ class _CounterAppState extends State<CounterApp> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Counter App'),
-        centerTitle: true,
+        title: const Text('Counter App'),  // Не менять
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            onPressed: _resetCounter,
+            tooltip: 'Reset',
+          ),
+        ],
       ),
       body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(
-              'Current Count:',
-              style: Theme.of(context).textTheme.headlineMedium,
-            ),
-            Text(
-              '$_counter', // Будет показывать и отрицательные числа
-              style: Theme.of(context).textTheme.displayMedium,
-            ),
-            const SizedBox(height: 40),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                IconButton(
-                  icon: const Icon(Icons.remove),
-                  onPressed: _decrement,
-                  tooltip: 'Decrement',
-                ),
-                const SizedBox(width: 20),
-                IconButton(
-                  icon: const Icon(Icons.refresh),
-                  onPressed: _reset,
-                  tooltip: 'Reset',
-                ),
-                const SizedBox(width: 20),
-                IconButton(
-                  icon: const Icon(Icons.add),
-                  onPressed: _increment,
-                  tooltip: 'Increment',
-                ),
-              ],
-            ),
-          ],
+        child: Text(
+          '$_counter',
+          style: const TextStyle(fontSize: 48),
         ),
+      ),
+      floatingActionButton: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          FloatingActionButton(
+            onPressed: _incrementCounter,
+            tooltip: 'Increment',
+            child: const Icon(Icons.add),
+          ),
+          const SizedBox(height: 12),
+          FloatingActionButton(
+            onPressed: _decrementCounter,
+            tooltip: 'Decrement',
+            child: const Icon(Icons.remove),
+          ),
+        ],
       ),
     );
   }

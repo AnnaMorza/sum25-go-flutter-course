@@ -7,47 +7,52 @@ class ProfileCard extends StatelessWidget {
   final String? avatarUrl;
 
   const ProfileCard({
-    Key? key,
+    super.key,
     required this.name,
     required this.email,
     required this.age,
     this.avatarUrl,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
+    final showInitial = name.isNotEmpty;
+
     return Card(
+      margin: const EdgeInsets.all(16.0),
       child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
           children: [
-            Center(
-              child: CircleAvatar(
-                radius: 30,
-                backgroundColor: Colors.blue,
-                foregroundColor: Colors.white,
-                backgroundImage: avatarUrl != null ? NetworkImage(avatarUrl!) : null,
-                child: avatarUrl == null 
-                    ? Text(
-                        name.isNotEmpty ? name[0] : '?',
-                        style: const TextStyle(fontSize: 24),
-                      )
-                    : null,
-              ),
+            CircleAvatar(
+              radius: 50,
+              backgroundImage: avatarUrl != null ? NetworkImage(avatarUrl!) : null,
+              child: (avatarUrl == null && showInitial)
+                  ? Text(
+                      name[0].toUpperCase(),
+                      style: const TextStyle(fontSize: 40),
+                    )
+                  : null,
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 16),
             Text(
-              name,
+              name.isEmpty ? '?' : name,
               style: const TextStyle(
-                fontSize: 20,
+                fontSize: 24,
                 fontWeight: FontWeight.bold,
               ),
             ),
-            const SizedBox(height: 4),
-            Text(email),
-            const SizedBox(height: 4),
-            Text('Age: $age'),
+            const SizedBox(height: 8),
+            Text(
+              'Age: $age',
+              style: const TextStyle(fontSize: 16),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              email,
+              style: const TextStyle(fontSize: 16, color: Colors.grey),
+            ),
           ],
         ),
       ),
