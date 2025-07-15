@@ -41,13 +41,11 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
         _history = historyResponse.entries;
       });
     } catch (e) {
-      // Silently ignore errors during testing or when backend is not available
       if (e.toString().contains('400') ||
           e.toString().contains('Failed to get history')) {
-        // This is expected during testing - don't print errors
         return;
       }
-      print('Failed to load history: $e');
+      // ignore other errors silently
     }
   }
 
@@ -69,7 +67,6 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
 
     try {
       CalculatorResult result;
-
       switch (operation) {
         case 'add':
           result = await _apiService.add(a, b);
@@ -92,7 +89,6 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
         _isLoading = false;
       });
 
-      // Refresh history after successful operation
       if (result.success) {
         await _loadHistory();
       }
@@ -176,12 +172,10 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
       ),
       body: SingleChildScrollView(
         child: Padding(
-          padding:
-              const EdgeInsets.all(12.0), // Reduced from 16.0 to fix overflow
+          padding: const EdgeInsets.all(12.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // Input Section
               Card(
                 child: Padding(
                   padding: const EdgeInsets.all(16.0),
@@ -224,10 +218,7 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
                   ),
                 ),
               ),
-
               const SizedBox(height: 16),
-
-              // Calculator Buttons
               Card(
                 child: Padding(
                   padding: const EdgeInsets.all(16.0),
@@ -273,10 +264,7 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
                   ),
                 ),
               ),
-
               const SizedBox(height: 16),
-
-              // Result Section
               Card(
                 child: Padding(
                   padding: const EdgeInsets.all(16.0),
@@ -391,12 +379,9 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
                   ),
                 ),
               ),
-
               const SizedBox(height: 16),
-
-              // History Section
               SizedBox(
-                height: 300, // Fixed height instead of Expanded
+                height: 300,
                 child: Card(
                   child: Padding(
                     padding: const EdgeInsets.all(16.0),
@@ -448,11 +433,8 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
                                             const TextStyle(color: Colors.grey),
                                       ),
                                       onTap: () {
-                                        // Fill inputs with historical values
-                                        _aController.text =
-                                            _formatNumber(entry.a);
-                                        _bController.text =
-                                            _formatNumber(entry.b);
+                                        _aController.text = _formatNumber(entry.a);
+                                        _bController.text = _formatNumber(entry.b);
                                       },
                                     );
                                   },
