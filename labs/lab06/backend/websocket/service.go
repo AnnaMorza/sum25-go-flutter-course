@@ -172,7 +172,9 @@ func (h *Hub) run() {
 					default:
 						log.Printf("❌ Failed to send message to %s - closing connection", client.userID)
 						close(client.send)
+						h.mutex.Lock()
 						delete(h.clients, client)
+						h.mutex.Unlock()
 					}
 				}
 			}
@@ -203,7 +205,9 @@ func (h *Hub) broadcastToOthers(message Message, sender *Client) {
 			default:
 				log.Printf("❌ Failed to send notification to %s - closing connection", client.userID)
 				close(client.send)
+				h.mutex.Lock()
 				delete(h.clients, client)
+				h.mutex.Unlock()
 			}
 		}
 	}
@@ -272,7 +276,7 @@ func (c *Client) readPump() {
 		c.conn.Close()
 	}()
 
-	// Set read deadline and pong handler for keepalive
+	c.conn.SetReadLimit(512)
 	c.conn.SetReadDeadline(time.Now().Add(60 * time.Second))
 	c.conn.SetPongHandler(func(string) error {
 		log.Printf("🏓 Pong received from client: %s", c.userID)
@@ -298,16 +302,13 @@ func (c *Client) readPump() {
 		message.Timestamp = time.Now()
 		message.User = c.userID
 
-		// Validate message type
 		if message.Type == "" {
 			message.Type = "message"
 		}
 
-		// Handle different message types
 		switch message.Type {
 		case "ping":
 			log.Printf("🏓 Ping received from %s, sending pong", c.userID)
-			// Send pong response
 			pong := Message{
 				Type:      "pong",
 				Content:   "pong",
@@ -323,7 +324,6 @@ func (c *Client) readPump() {
 			}
 		default:
 			log.Printf("📤 Broadcasting message from %s to all clients", c.userID)
-			// Broadcast message to all clients
 			c.hub.broadcast <- message
 		}
 	}
@@ -345,7 +345,6 @@ func (c *Client) writePump() {
 			c.conn.SetWriteDeadline(time.Now().Add(10 * time.Second))
 			if !ok {
 				log.Printf("💔 Send channel closed for %s", c.userID)
-				// Hub closed the channel
 				c.conn.WriteMessage(websocket.CloseMessage, []byte{})
 				return
 			}
@@ -359,7 +358,6 @@ func (c *Client) writePump() {
 
 		case <-ticker.C:
 			log.Printf("🏓 Sending ping to client: %s", c.userID)
-			// Send ping message to keep connection alive
 			c.conn.SetWriteDeadline(time.Now().Add(10 * time.Second))
 			if err := c.conn.WriteMessage(websocket.PingMessage, nil); err != nil {
 				log.Printf("❌ Ping failed for %s: %v", c.userID, err)
@@ -367,6 +365,20 @@ func (c *Client) writePump() {
 			}
 			log.Printf("✅ Ping sent to %s", c.userID)
 		}
+	}
+}
+
+// Close gracefully closes client connection and cleans resources
+func (c *Client) Close() {
+	c.mutex.Lock()
+	defer c.mutex.Unlock()
+	if c.isActive {
+		c.isActive = false
+		c.conn.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
+		c.conn.Close()
+		close(c.send)
+		c.hub.unregister <- c
+		log.Printf("🛑 Client closed: %s", c.userID)
 	}
 }
 
